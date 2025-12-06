@@ -1,0 +1,141 @@
+# checkov:skip=CKV_OPENAPI_5: Using JWT OAuth authentication at API Gateway level
+openapi: "3.0.1"
+info:
+  title: "Leave of Absence API"
+  version: "1.0"
+servers: []
+
+paths:
+  /v1/loa-events:
+    post:
+      security:
+        - PingOAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveRequest'
+      responses:
+        "202":
+          description: "Accepted - processing asynchronously"
+          content: {}
+        "400":
+          description: "Bad Request - validation failed"
+          content: {}
+      x-amazon-apigateway-request-validator: "validate-body"
+      x-amazon-apigateway-integration:
+        type: "aws"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:$${AWS::Region}:lambda:path/2015-03-31/functions/${lambda_arn}/invocations"
+        credentials: "arn:aws:iam::$${AWS::AccountId}:role/${apigw_role_name}"
+        requestParameters:
+          integration.request.header.X-Amz-Invocation-Type: "'Event'"
+        responses:
+          default:
+            statusCode: "202"
+            responseTemplates:
+              application/json: '{"status": "accepted"}'
+components:
+  schemas:
+    LeaveRequest:
+      type: object
+      required:
+        - Data
+      properties:
+        Data:
+          type: array
+          items:
+            type: object
+            required:
+              - Worker_Type
+              - Worker_personnelNumber
+              - Worker_userID
+              - Worker_personnelStatusCode
+              - Leave
+            properties:
+              Worker_Type:
+                type: string
+              Worker_personnelNumber:
+                type: string
+              Worker_userID:
+                type: string
+              Worker_personnelStatusCode:
+                type: string
+              Leave:
+                type: object
+                required:
+                  - Operation
+                properties:
+                  EventWID:
+                    type: string
+                    nullable: true
+                  Operation:
+                    type: string
+                  Type:
+                    type: string
+                    nullable: true
+                  OnLeave:
+                    type: boolean
+                    nullable: true
+                  LeaveStartDate:
+                    type: string
+                    format: date
+                    nullable: true
+                  EstimatedLeaveEndDate:
+                    type: string
+                    format: date
+                    nullable: true
+                  LeaveEndDate:
+                    type: string
+                    format: date
+                    nullable: true
+                  FirstDayOfWork:
+                    type: string
+                    format: date
+                    nullable: true
+                  LeaveLastDayOfWork:
+                    type: string
+                    format: date
+                    nullable: true
+                  LeaveOfAbsenceType:
+                    type: string
+                    nullable: true
+                  LeaveOfAbsenceTypeDescription:
+                    type: string
+                    nullable: true
+                  CaseNumber:
+                    type: string
+                    nullable: true
+                  FrequencyAndDuration:
+                    type: string
+                    nullable: true
+                  ExpectedDueDate:
+                    type: string
+                    format: date
+                    nullable: true
+                  CeasareanSectionBirth:
+                    type: string
+                    nullable: true
+                  DateOfInjury:
+                    type: string
+                    format: date
+                    nullable: true
+                  ChildBirthDate:
+                    type: string
+                    format: date
+                    nullable: true
+x-amazon-apigateway-request-validators:
+  validate-body:
+    validateRequestBody: true
+    validateRequestParameters: false
+  securitySchemes:
+    PingOAuth:
+      type: oauth2
+      x-amazon-apigateway-authorizer:
+        type: jwt
+        jwtConfiguration:
+          issuer: "${oauth_issuer}"
+          audience:
+            - "${oauth_audience}"
+        identitySource: "$request.header.Authorization"

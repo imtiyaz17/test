@@ -1,0 +1,14 @@
+--extra-index-url https://nexus-tools.swacorp.com/repository/all-pypi/simple
+--trusted-host nexus-tools.swacorp.com
+
+confluent-kafka==2.4.0
+avro==1.12.0
+fastavro==1.12.0
+requests==2.32.5
+# checkov:skip=BC_LIC_3: certifi MPL-2.0 license is permissive and widely accepted
+certifi==2025.10.5
+charset-normalizer==3.4.3
+idna==3.10
+urllib3==2.5.0
+swacerts
+schema-registry-cache>=1.19.0
